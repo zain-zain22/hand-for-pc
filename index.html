@@ -2,7 +2,254 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>PC Writing Board - Smooth Zoom & Late Fade</title>
+    <title>PC<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>PC Writing Board - Drag Fix</title>
+    <style>
+        html, body { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden !important; background: #222; 
+            cursor: none; 
+        }
+        
+        #toolbar, button, input { cursor: default; } 
+
+        #toolbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+
+            background: white; padding: 10px; display: flex; gap: 15px;
+
+
+            box-shadow: 0 2px 15px rgba(0,0,0,0.4); justify-content: center;
+            align-items: center; flex-wrap: wrap; font-family: sans-serif; font-size: 13px;
+        }
+
+        #viewport { 
+            width: 100vw; height: 100vh; position: relative; 
+            background: #444; overflow: hidden; 
+            user-select: none;
+        }
+        
+        #content-layer {
+            position: absolute; width: 5000px; min-height: 5000px;
+            background: white; top: 0; left: 0; transform-origin: 0 0;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        #image-container { width: 100%; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
+        .bg-img { width: 100%; max-width: 100%; display: block; }
+
+        #board { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; touch-action: none; }
+
+        .hand-container { position: fixed; pointer-events: none; z-index: 9999; display: none; }
+        
+        #modeStatus { font-weight: bold; padding: 2px 10px; border-radius: 4px; }
+
+        .fade-out-active { 
+            transition: opacity 2s ease-in-out;
+            transition-delay: 1s;
+            opacity: 0 !important; 
+        }
+        
+        button { padding: 6px 12px; cursor: pointer; border: 1px solid #ccc; background: #f9f9f9; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div id="toolbar">
+    <span id="modeStatus" style="background: #e8f5e9; color: green;">PEN MODE (Press Space to Drag)</span>
+
+    <div class="control-group">
+        <button onclick="toggleFullScreen()">Full Screen</button>
+        <label>Add Images: <input type="file" id="bgUploader" accept="image/*" multiple style="width: 100px;"></label>
+    </div>
+
+    <div class="control-group">
+        <span>Pen Size:</span>
+        <input type="range" id="penWidth" min="2" max="60" value="10">
+        <label><input type="checkbox" id="fadeToggle"> Fade</label>
+        <input type="color" id="colorPicker" value="#000000">
+    </div>
+    
+    <button onclick="undo()">Undo</button>
+    <button onclick="clearBoard()" style="background:#ff4444; color:white;">Clear All</button>
+</div>
+
+<div id="viewport">
+    <div id="content-layer">
+        <div id="image-container"></div>
+        <svg id="board" xmlns="http://www.w3.org/2000/svg" width="5000" height="10000"></svg>
+    </div>
+</div>
+
+<div id="pointing-container" class="hand-container">
+    <img src="hand-pointing.png" alt="Pointing" style="width: 150px;" />
+</div>
+
+<div id="writing-container" class="hand-container">
+    <img src="hand-writing.png" alt="Writing" style="width: 350px;" />
+</div>
+
+<script>
+    const svg = document.getElementById("board");
+    const contentLayer = document.getElementById("content-layer");
+    const imgContainer = document.getElementById("image-container");
+    const pointingCont = document.getElementById("pointing-container");
+    const writingCont = document.getElementById("writing-container");
+    const modeStatus = document.getElementById("modeStatus");
+
+    let isPenMode = true;
+    let drawing = false;
+    let dragging = false;
+    let strokes = [];
+    let currentPath = null;
+    let scale = 1, posX = 0, posY = 0;
+    let startX, startY;
+
+    const NIB_X = -80, NIB_Y = -120;
+
+    // --- Spacebar Logic ---
+    window.addEventListener('keydown', (e) => {
+        if (e.code === "Space") {
+            isPenMode = false;
+            modeStatus.innerText = "DRAG MODE";
+            modeStatus.style.color = "orange";
+            modeStatus.style.background = "#fff3e0";
+            pointingCont.style.display = "none";
+            writingCont.style.display = "none";
+            svg.style.cursor = "move";
+        }
+        if (e.code === "ArrowDown") { posY -= 60; applyTransform(); }
+        if (e.code === "ArrowUp") { posY += 60; applyTransform(); }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        if (e.code === "Space") {
+            isPenMode = true;
+            modeStatus.innerText = "PEN MODE (Press Space to Drag)";
+            modeStatus.style.color = "green";
+            modeStatus.style.background = "#e8f5e9";
+            svg.style.cursor = "none";
+        }
+    });
+
+    // Slower Smooth Zoom
+    window.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomSpeed = 0.02;
+        if (e.deltaY < 0) scale += zoomSpeed;
+        else scale = Math.max(0.1, scale - zoomSpeed);
+        applyTransform();
+    }, { passive: false });
+
+    function applyTransform() {
+        contentLayer.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+    }
+
+    function renderHand(e) {
+        if (!isPenMode) return;
+        let active = drawing ? writingCont : pointingCont;
+        let idle = drawing ? pointingCont : writingCont;
+        active.style.display = "block";
+        idle.style.display = "none";
+        
+        if (drawing) {
+            active.style.left = (e.clientX + NIB_X) + "px";
+            active.style.top = (e.clientY + NIB_Y) + "px";
+        } else {
+            active.style.left = (e.clientX - 10) + "px";
+            active.style.top = (e.clientY - 5) + "px";
+        }
+    }
+
+    svg.onmousedown = (e) => {
+        if (e.buttons !== 1) return;
+        if (isPenMode) {
+            drawing = true;
+            const c = getCoords(e);
+            currentPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            currentPath.setAttribute("d", `M ${c.x} ${c.y}`);
+            currentPath.setAttribute("stroke", document.getElementById("colorPicker").value);
+            currentPath.setAttribute("stroke-width", document.getElementById("penWidth").value / scale);
+            currentPath.setAttribute("fill", "none");
+            currentPath.setAttribute("stroke-linecap", "round");
+            currentPath.setAttribute("stroke-linejoin", "round");
+            svg.appendChild(currentPath);
+            strokes.push(currentPath);
+        } else {
+            dragging = true;
+            startX = e.clientX - posX;
+            startY = e.clientY - posY;
+        }
+    };
+
+    window.addEventListener('mousemove', (e) => {
+        if (isPenMode) {
+            if (drawing && currentPath) {
+                const c = getCoords(e);
+                currentPath.setAttribute("d", currentPath.getAttribute("d") + ` L ${c.x} ${c.y}`);
+            }
+            renderHand(e);
+        } else if (dragging) {
+            posX = e.clientX - startX;
+            posY = e.clientY - startY;
+            applyTransform();
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (drawing && currentPath && document.getElementById("fadeToggle").checked) {
+            let p = currentPath;
+            p.setAttribute("class", "fade-out-active");
+            setTimeout(() => { if (p.parentNode) svg.removeChild(p); }, 3000);
+        }
+        drawing = false; 
+        dragging = false;
+    });
+
+    function getCoords(e) {
+        const rect = contentLayer.getBoundingClientRect();
+        return { x: (e.clientX - rect.left) / scale, y: (e.clientY - rect.top) / scale };
+    }
+
+    bgUploader.onchange = function(e) {
+        const files = e.target.files;
+        for (let file of files) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = document.createElement("img");
+                img.src = event.target.result;
+                img.className = "bg-img";
+                imgContainer.appendChild(img);
+            }
+            reader.readAsDataURL(file);
+        }
+    };
+
+    function undo() {
+        if (strokes.length > 0) {
+            const last = strokes.pop();
+            if (last.parentNode) svg.removeChild(last);
+        }
+    }
+
+    function clearBoard() {
+        svg.innerHTML = "";
+        imgContainer.innerHTML = "";
+        strokes = [];
+    }
+
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else document.exitFullscreen();
+    }
+</script>
+
+</body>
+</html>
+ Writing Board - Smooth Zoom & Late Fade</title>
     <style>
         html, body { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
