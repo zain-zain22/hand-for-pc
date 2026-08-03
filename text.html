@@ -40,7 +40,7 @@
             position: absolute;
             pointer-events: auto;
             user-select: none;
-            line-height: 1;
+            line-height: 1.2;
             font-family: sans-serif;
             font-weight: bold;
             white-space: nowrap;
@@ -74,17 +74,21 @@
     <span id="modeStatus" style="background: #e8f5e9; color: green;">PEN MODE (Space: Board Drag | Ctrl: Text Drag)</span>
     <div class="control-group">
         <button onclick="toggleFullScreen()">Full Screen</button>
-        <!-- ഇമേജ് അപ്‌ലോഡർ (നിലനിർത്തിയിരിക്കുന്നു) -->
         <label>Add Images: <input type="file" id="bgUploader" accept="image/*" multiple style="width: 100px;"></label>
     </div>
-    <!-- ടെക്സ്റ്റ് ആഡ് ചെയ്യാനുള്ള പുതിയ കൺട്രോളുകൾ -->
+
+    <!-- ടെക്സ്റ്റ് കൺട്രോളുകൾ -->
     <div class="control-group">
         <input type="text" id="textInput" placeholder="ടെക്സ്റ്റ് ടൈപ്പ് ചെയ്യുക..." style="padding: 5px; width: 150px;">
         <button onclick="addText()">Add Text</button>
+        <span>Text Size:</span>
+        <input type="range" id="textSize" min="12" max="150" value="32">
     </div>
+
+    <!-- പെൻ കൺട്രോളുകൾ -->
     <div class="control-group">
-        <span>Pen/Text Size:</span>
-        <input type="range" id="penWidth" min="2" max="100" value="24">
+        <span>Pen Size:</span>
+        <input type="range" id="penWidth" min="2" max="60" value="10">
         <label><input type="checkbox" id="fadeToggle"> Fade</label>
         <input type="color" id="colorPicker" value="#000000">
     </div>
@@ -123,10 +127,13 @@
     let dragging = false;
 
     // Text Dragging Variables
-    let isDragKeyPressed = false; // Drag Key (Ctrl/Alt) state
+    let isDragKeyPressed = false; 
     let isDraggingText = false;
     let activeTextElement = null;
     let textOffsetX = 0, textOffsetY = 0;
+    
+    // പുതിയ ടെക്സ്റ്റുകൾ ഒന്നതിനു താഴെ ഒന്നായി വരാനുള്ള വേരിയബിൾ
+    let lastTextY = null;
 
     let strokes = []; 
     let currentPath = null;
@@ -134,9 +141,8 @@
     let startX, startY;
     const NIB_X = -80, NIB_Y = -120;
 
-    // --- Keydown Handling (Spacebar & Ctrl key) ---
+    // --- Keydown Handling ---
     window.addEventListener('keydown', (e) => {
-        // Space Key - Board Drag (Input ബോക്സിൽ ടൈപ്പ് ചെയ്യുമ്പോൾ വർക്ക് ആകില്ല)
         if (e.code === "Space" && document.activeElement.tagName !== "INPUT") {
             isPenMode = false;
             modeStatus.innerText = "BOARD DRAG MODE";
@@ -147,7 +153,6 @@
             svg.style.cursor = "move";
         }
 
-        // Control Key (or Alt Key) - Enable Text Drag Mode
         if ((e.key === "Control" || e.key === "Alt") && document.activeElement.tagName !== "INPUT") {
             isDragKeyPressed = true;
             document.body.classList.add('drag-key-pressed');
@@ -230,17 +235,27 @@
         textDiv.className = "draggable-text";
         textDiv.innerText = val;
         textDiv.style.color = document.getElementById("colorPicker").value;
-        textDiv.style.fontSize = document.getElementById("penWidth").value + "px";
+        
+        // Text Size പ്രത്യേകമായി എടുക്കുന്നു
+        const fontSize = parseFloat(document.getElementById("textSize").value);
+        textDiv.style.fontSize = fontSize + "px";
 
-        // current screen center
         const rect = contentLayer.getBoundingClientRect();
         const defaultX = (window.innerWidth / 2 - rect.left) / scale;
-        const defaultY = (window.innerHeight / 3 - rect.top) / scale;
+        
+        // ടെക്സ്റ്റുകൾ ഒന്നതിനു താഴെ ഒന്നായി വരാനുള്ള പൊസിഷൻ കണക്കാക്കൽ
+        let defaultY;
+        if (lastTextY === null) {
+            defaultY = (window.innerHeight / 3 - rect.top) / scale;
+        } else {
+            defaultY = lastTextY + fontSize + 15; // തൊട്ടടുത്ത വരിയിലേക്ക് താഴേക്ക് മാറ്റുന്നു
+        }
+        lastTextY = defaultY;
 
         textDiv.style.left = defaultX + "px";
         textDiv.style.top = defaultY + "px";
 
-        // Drag only if Ctrl/Alt key is held down
+        // Drag handler
         textDiv.addEventListener('mousedown', (e) => {
             if (!isDragKeyPressed) return; 
 
@@ -258,7 +273,7 @@
         input.value = "";
     }
 
-    // Image Upload Logic (Original Function Retained)
+    // Image Upload Logic
     bgUploader.onchange = function(e) {
         const files = e.target.files;
         for (let file of files) {
@@ -347,6 +362,7 @@
         textContainer.innerHTML = "";
         imgContainer.innerHTML = "";
         strokes = [];
+        lastTextY = null; // Position Reset
     }
 
     function toggleFullScreen() {
