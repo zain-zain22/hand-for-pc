@@ -1,375 +1,390 @@
 <!DOCTYPE html>
-<html>
+<html lang="ml">
 <head>
-    <meta charset="UTF-8">
-    <title>PC Writing Board - Text & Image Support</title>
-    <style>
-        html, body { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            overflow: hidden !important; background: #222; 
-            cursor: none; 
-        }
-        
-        #toolbar, button, input { cursor: default; } 
-        #toolbar {
-            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-            background: white; padding: 10px; display: flex; gap: 15px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.4); justify-content: center;
-            align-items: center; flex-wrap: wrap; font-family: sans-serif; font-size: 13px;
-        }
-        #viewport { 
-            width: 100vw; height: 100vh; position: relative; 
-            background: #444; overflow: hidden; 
-            user-select: none;
-        }
-        
-        #content-layer {
-            position: absolute; width: 5000px; min-height: 5000px;
-            background: white; top: 0; left: 0; transform-origin: 0 0;
-            display: flex; flex-direction: column; align-items: center;
-        }
-        #image-container { width: 100%; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
-        .bg-img { width: 100%; max-width: 100%; display: block; }
-
-        /* Text Container & Draggable Elements */
-        #text-container { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            pointer-events: none; z-index: 3; 
-        }
-        .draggable-text {
-            position: absolute;
-            pointer-events: auto;
-            user-select: none;
-            line-height: 1.2;
-            font-family: sans-serif;
-            font-weight: bold;
-            white-space: nowrap;
-            padding: 5px;
-            border: 1px dashed transparent;
-            cursor: default;
-        }
-        
-        /* Ctrl അല്ലെങ്കിൽ Alt പ്രസ്സ് ചെയ്യുമ്പോൾ മാത്രം Cursor മൂവ് ആകും */
-        body.drag-key-pressed .draggable-text {
-            cursor: move;
-            border: 1px dashed #888;
-        }
-
-        #board { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; touch-action: none; }
-        .hand-container { position: fixed; pointer-events: none; z-index: 9999; display: none; }
-        
-        #modeStatus { font-weight: bold; padding: 2px 10px; border-radius: 4px; }
-        .fade-out-active { 
-            transition: opacity 2s ease-in-out;
-            transition-delay: 1s;
-            opacity: 0 !important; 
-        }
-        
-        button { padding: 6px 12px; cursor: pointer; border: 1px solid #ccc; background: #f9f9f9; border-radius: 4px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PC Writing Board - Tajweed Class</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic&family=Noto+Sans+Malayalam&family=Scheherazade+New&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#222;cursor:none;font-family:sans-serif}
+#toolbar,#legend,#help{cursor:default}
+#toolbar{position:fixed;top:0;left:0;right:0;z-index:1000;background:#fff;padding:6px 8px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;font-size:13px;box-shadow:0 2px 15px rgba(0,0,0,.4)}
+#toolbar.hide{display:none}
+.g{display:flex;gap:5px;align-items:center;padding-right:10px;border-right:1px solid #ddd}
+button,.btn,select{padding:5px 9px;border:1px solid #bbb;background:#f7f7f7;border-radius:5px;cursor:pointer;font-size:13px}
+button.on{background:#1565c0;color:#fff;border-color:#1565c0}
+button.red{background:#e53935;color:#fff;border-color:#e53935}
+#mode{padding:3px 9px;border-radius:5px;background:#e8f5e9;color:#2e7d32;white-space:nowrap}
+#ti{width:150px;padding:5px}
+.vp{position:fixed;top:0;bottom:0;left:0;right:0;background:#444;overflow:hidden;user-select:none;touch-action:none}
+.layer{position:absolute;top:0;left:0;width:1280px;transform-origin:0 0;background:#fff}
+.pimg{min-height:1000px;display:flex;flex-direction:column;align-items:center}
+.pimg img{width:100%;display:block}
+.pboard{position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;display:block}
+.ptxt{position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none}
+.dt{position:absolute;transform:translateX(-50%);pointer-events:none;white-space:pre;line-height:2.1;padding:4px 10px;border:1px dashed transparent;font-family:'Amiri',serif}
+body.texttool .dt{pointer-events:auto;cursor:text}
+body.ctrl .dt{pointer-events:auto;cursor:move;border-color:#888}
+body.ctrl .dt.act{outline:2px dashed #1565c0}
+.dt.edit{pointer-events:auto;user-select:text;cursor:text;border-color:#1565c0;background:rgba(255,255,255,.6)}
+.fade{transition:opacity 2s ease-in-out 1s;opacity:0!important}
+.hand{position:fixed;pointer-events:none;z-index:9999;display:none}
+#ring{position:fixed;pointer-events:none;z-index:9999;display:none;width:24px;height:24px;border:2px solid #e53935;border-radius:50%;margin:-12px 0 0 -12px}
+#legend{position:fixed;right:10px;bottom:10px;z-index:900;background:rgba(255,255,255,.93);border-radius:10px;padding:8px 10px;box-shadow:0 2px 10px rgba(0,0,0,.4);font-size:15px;direction:ltr}
+#legend b{display:block;font-size:12px;margin-bottom:4px;color:#555}
+.lg{display:flex;align-items:center;gap:8px;padding:3px 4px;cursor:pointer;border-radius:5px}
+.lg:hover{background:#eee}
+.lg i{width:16px;height:16px;border-radius:50%;display:inline-block;border:1px solid #0003}
+#help{position:fixed;inset:60px 20% auto 20%;z-index:2000;background:#fff;padding:14px 20px;border-radius:10px;box-shadow:0 4px 25px #000a;display:none;line-height:1.7;font-size:14px}
+#stat{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#000b;color:#fff;padding:6px 14px;border-radius:20px;z-index:2000;display:none}
+</style>
 </head>
 <body>
 
 <div id="toolbar">
-    <span id="modeStatus" style="background: #e8f5e9; color: green;">PEN MODE (Space: Board Drag | Ctrl: Text Drag)</span>
-    <div class="control-group">
-        <button onclick="toggleFullScreen()">Full Screen</button>
-        <label>Add Images: <input type="file" id="bgUploader" accept="image/*" multiple style="width: 100px;"></label>
-    </div>
-
-    <!-- ടെക്സ്റ്റ് കൺട്രോളുകൾ -->
-    <div class="control-group">
-        <input type="text" id="textInput" placeholder="ടെക്സ്റ്റ് ടൈപ്പ് ചെയ്യുക..." style="padding: 5px; width: 150px;">
-        <button onclick="addText()">Add Text</button>
-        <span>Text Size:</span>
-        <input type="range" id="textSize" min="12" max="150" value="32">
-    </div>
-
-    <!-- പെൻ കൺട്രോളുകൾ -->
-    <div class="control-group">
-        <span>Pen Size:</span>
-        <input type="range" id="penWidth" min="2" max="60" value="10">
-        <label><input type="checkbox" id="fadeToggle"> Fade</label>
-        <input type="color" id="colorPicker" value="#000000">
-    </div>
-    
-    <button onclick="undo()">Undo</button>
-    <button onclick="clearBoard()" style="background:#ff4444; color:white;">Clear All</button>
+ <b id="mode"></b>
+ <span class="g" id="tools">
+  <button data-t="pen">✏️ പേന</button><button data-t="hl">🖍 ഹൈലൈറ്റ്</button><button data-t="eraser">🧽 മായ്ക്കുക</button>
+  <button data-t="line">╱</button><button data-t="rect">▭</button><button data-t="ell">◯</button>
+ </span>
+ <span class="g">
+  <input type="color" id="color" value="#000000">
+  <label>വലുപ്പം <input type="range" id="pw" min="2" max="60" value="8" style="width:70px"></label>
+  <label><input type="checkbox" id="fade"> Fade</label>
+ </span>
+ <span class="g">
+  <button onclick="undo()">↶ Undo</button><button onclick="redo()">↷ Redo</button><button class="red" onclick="clearPage()">Clear</button>
+ </span>
+ <span class="g">
+  <button onclick="go(-1)">◀</button><b id="pg">1/1</b><button onclick="go(1)">▶</button><button onclick="addPage()">＋ പേജ്</button>
+ </span>
+ <span class="g">
+  <label class="btn">📎 Image / PDF<input type="file" id="up" accept="image/*,application/pdf" multiple hidden></label>
+  <select id="bg" onchange="setBg(this.value)">
+   <option value="white">വെള്ള</option><option value="cream">ക്രീം</option><option value="board">ബ്ലാക്ക്ബോർഡ്</option>
+   <option value="dark">ഇരുണ്ടത്</option><option value="grid">ഗ്രിഡ്</option><option value="lined">വരകൾ</option><option value="green">ഗ്രീൻ സ്ക്രീൻ</option>
+  </select>
+ </span>
+ <span class="g">
+  
+  <select id="ff"><option value="'Amiri',serif">Amiri</option><option value="'Scheherazade New',serif">Scheherazade</option><option value="'Noto Naskh Arabic',serif">Naskh</option><option value="'Noto Sans Malayalam',sans-serif">Malayalam</option></select>
+  <input type="range" id="ts" min="20" max="150" value="56" style="width:70px" title="Text size">
+  <button data-t="text">🔤 Add Text (T)</button><button onclick="delText()">🗑</button>
+ </span>
+ <span class="g" style="border:0">
+  <button onclick="switchTab()">🗂 ബോർഡ് 1/2 (B)</button><button onclick="toggleSplit()">◫ Split (S)</button><button onclick="fit()">Fit</button><button onclick="fs()">Full Screen</button>
+  <button onclick="toggleLegend()">🎨 തജ്‌വീദ്</button><button onclick="toggleBar()">Hide (H)</button><button onclick="toggleHelp()">?</button>
+ </span>
 </div>
 
-<div id="viewport">
-    <div id="content-layer">
-        <div id="image-container"></div>
-        <div id="text-container"></div>
-        <svg id="board" xmlns="http://www.w3.org/2000/svg" width="5000" height="10000"></svg>
-    </div>
+<div id="viewport" class="vp"><div id="layer" class="layer"></div></div>
+
+<div id="legend">
+ <b>തജ്‌വീദ് നിറങ്ങൾ (അക്ഷരം സെലക്ട് ചെയ്ത് ക്ലിക്ക്)</b>
+ <div class="lg" data-c="#1e9e3a"><i style="background:#1e9e3a"></i>ഗുന്ന</div>
+ <div class="lg" data-c="#ef7d00"><i style="background:#ef7d00"></i>ഇഖ്ഫാഅ്</div>
+ <div class="lg" data-c="#1f6fd1"><i style="background:#1f6fd1"></i>ഇദ്ഗാം</div>
+ <div class="lg" data-c="#8e3fc0"><i style="background:#8e3fc0"></i>ഇഖ്ലാബ്</div>
+ <div class="lg" data-c="#e0245e"><i style="background:#e0245e"></i>ഖൽഖല</div>
+ <div class="lg" data-c="#00a3a3"><i style="background:#00a3a3"></i>മദ്ദ്</div>
+ <div class="lg" data-c="#000000"><i style="background:#000"></i>സാധാരണ (കറുപ്പ്)</div>
+ <div class="lg" data-c="#ffffff"><i style="background:#fff"></i>വെള്ള</div>
 </div>
 
-<div id="pointing-container" class="hand-container">
-    <img src="hand-pointing.png" alt="Pointing" style="width: 150px;" />
+<div id="help">
+ <b>ഷോർട്ട്കട്ടുകൾ</b><br>
+ 1 പേന · 2 ഹൈലൈറ്റ് · 3 മായ്ക്കൽ · 4 വര · 5 ചതുരം · 6 വൃത്തം<br>
+ Space പിടിച്ച് ഡ്രാഗ്: ബോർഡ് നീക്കുക · Ctrl/Alt പിടിച്ച് ഡ്രാഗ്: ടെക്സ്റ്റ് നീക്കുക<br>
+ Ctrl + ഡബിൾ ക്ലിക്ക്: ടെക്സ്റ്റ് എഡിറ്റ് · Esc: എഡിറ്റ് നിർത്തുക · Delete: ടെക്സ്റ്റ് നീക്കം<br>
+ ടെക്സ്റ്റിൽ അക്ഷരം സെലക്ട് ചെയ്ത് 🎨 പാലറ്റിൽ ക്ലിക്ക് → ആ അക്ഷരത്തിന് മാത്രം നിറം<br>
+ Ctrl+Z / Ctrl+Y: Undo/Redo · ← → : പേജ് മാറ്റം · ↑ ↓ : സ്ക്രോൾ<br>
+ Mouse wheel: സൂം · Shift+wheel: സ്ക്രോൾ · F: Fit · H: ടൂൾബാർ മറയ്ക്കുക · B: ബോർഡ് 1 ↔ ബോർഡ് 2 (ഫുൾ സ്ക്രീൻ ടാബ്; ഒന്നിൽ PDF, മറ്റേത് ഒഴിഞ്ഞ ബോർഡ്) · S: സ്പ്ലിറ്റ് (ഇടത് പേജ്/PDF, വലത് ഒഴിഞ്ഞ ബോർഡ്; മൗസ് ഏത് വശത്തോ അതാണ് സജീവം) · L: പാലറ്റ് കാണിക്കുക/മറയ്ക്കുക<br><b>T (അല്ലെങ്കിൽ 🔤 Add Text ബട്ടൺ): ടെക്സ്റ്റ് ഓൺ/ഓഫ്</b> → ഓൺ ആയിരിക്കുമ്പോൾ എവിടെ ക്ലിക്ക് ചെയ്താലും അവിടെ ടൈപ്പ് ചെയ്യാം, എത്ര എണ്ണം വേണമെങ്കിലും · Enter: ഓക്കെ (Shift+Enter: പുതിയ വരി) · ഓഫ് ചെയ്യാൻ T അല്ലെങ്കിൽ 1 (പേന)<br>7 കറുപ്പ് · 8 ചുവപ്പ് · 9 നീല · 0 വെള്ള · [ ] പേന വലുപ്പം · H ടൂൾബാർ മറയ്ക്കുക
 </div>
-<div id="writing-container" class="hand-container">
-    <img src="hand-writing.png" alt="Writing" style="width: 350px;" />
-</div>
+<div id="stat"></div>
+<div id="ring"></div>
+<div id="pointing" class="hand"><img src="hand-pointing.png" style="width:150px" onerror="this.style.display='none'"></div>
+<div id="writing" class="hand"><img src="hand-writing.png" style="width:350px" onerror="this.style.display='none'"></div>
 
 <script>
-    const svg = document.getElementById("board");
-    const contentLayer = document.getElementById("content-layer");
-    const imgContainer = document.getElementById("image-container");
-    const textContainer = document.getElementById("text-container");
-    const pointingCont = document.getElementById("pointing-container");
-    const writingCont = document.getElementById("writing-container");
-    const modeStatus = document.getElementById("modeStatus");
-    const bgUploader = document.getElementById("bgUploader");
-    
-    let isPenMode = true;
-    let drawing = false;
-    let dragging = false;
+const $=id=>document.getElementById(id), NS='http://www.w3.org/2000/svg', W=1280;
+let layer,vp,P=null,pA,pB=null,split=false;
+let pages=[],cur,pi=0,tool='pen',scale=1,posX=0,posY=56,space=false,ctrl=false,tkey=false;
+let drawing=false,pan=false,panS,shape,sx,sy,erased=[],drag=null,active=null;
+const NIB_X=-80,NIB_Y=-120;
+const mk=(t,c)=>{const e=document.createElement(t);e.className=c;return e};
 
-    // Text Dragging Variables
-    let isDragKeyPressed = false; 
-    let isDraggingText = false;
-    let activeTextElement = null;
-    let textOffsetX = 0, textOffsetY = 0;
-    
-    // പുതിയ ടെക്സ്റ്റുകൾ ഒന്നതിനു താഴെ ഒന്നായി വരാനുള്ള വേരിയബിൾ
-    let lastTextY = null;
+function newPage(){
+  const p={img:mk('div','pimg'),txt:mk('div','ptxt'),svg:document.createElementNS(NS,'svg'),undo:[],redo:[],lastY:null};
+  p.svg.setAttribute('class','pboard');
+  layer.append(p.img,p.svg,p.txt); pages.push(p); return p;
+}
+function show(i){
+  pages.forEach((p,k)=>{const d=k==i?'':'none';p.img.style.display=d;p.svg.style.display=d;p.txt.style.display=d});
+  pi=i;cur=pages[i];updPg();
+}
+function updPg(){$('pg').textContent=(split?(P===pA?'⬅ ':'➡ '):(pB?(tab?'[ബോർഡ് 2] ':'[ബോർഡ് 1] '):''))+(pi+1)+'/'+pages.length}
+const paneAt=e=>split?(e.clientX>=innerWidth/2?pB:pA):(tab?pB:pA);
+function mkPane(v,l){return{vp:v,layer:l,pages:[],pi:0,scale:1,posX:0,posY:56}}
+function bind(p){
+  if(P===p)return;
+  if(P){P.pi=pi;P.scale=scale;P.posX=posX;P.posY=posY}
+  P=p;vp=p.vp;layer=p.layer;pages=p.pages;pi=p.pi;cur=pages[pi];scale=p.scale;posX=p.posX;posY=p.posY;updPg();
+}
+function wirePane(p){
+  p.vp.addEventListener('pointerdown',e=>{bind(p);paneDown(e)});
+  p.layer.addEventListener('pointerdown',e=>{bind(p);textDown(e)});
+  p.layer.addEventListener('dblclick',e=>{bind(p);textDbl(e)});
+}
+let tab=0;
+function ensureB(){
+  if(pB)return;
+  const v=document.createElement('div');v.className='vp';v.style.display='none';
+  const l=document.createElement('div');l.className='layer';v.appendChild(l);
+  document.body.insertBefore(v,$('legend'));pB=mkPane(v,l);wirePane(pB);
+  const prev=P;bind(pB);newPage();show(0);setBg('white');bind(prev);
+}
+function layout(){
+  const a=pA.vp.style,b=pB.vp.style;
+  if(split){a.display='block';a.right='50%';b.display='block';b.left='50%';b.borderLeft='3px solid #111'}
+  else{a.right='0';b.left='0';b.borderLeft='0';a.display=tab?'none':'block';b.display=tab?'block':'none'}
+  const vis=split?[pA,pB]:[tab?pB:pA];
+  vis.forEach(p=>{bind(p);fit()});bind(vis[0]);updPg();
+}
+function toggleSplit(){ensureB();split=!split;layout()}
+function switchTab(){ensureB();split=false;tab=tab?0:1;layout()}
+function addPage(){newPage();show(pages.length-1)}
+function go(d){const n=pi+d;if(n>=0&&n<pages.length){show(n);posY=$('toolbar').classList.contains('hide')?0:56;apply()}}
+function isEmpty(p){return !p.img.children.length&&!p.svg.children.length&&!p.txt.children.length}
 
-    let strokes = []; 
-    let currentPath = null;
-    let scale = 1, posX = 0, posY = 0;
-    let startX, startY;
-    const NIB_X = -80, NIB_Y = -120;
+function apply(){layer.style.transform=`translate(${posX}px,${posY}px) scale(${scale})`}
+function fit(){scale=vp.clientWidth/W;posX=0;posY=$('toolbar').classList.contains('hide')?0:$('toolbar').offsetHeight;apply()}
+const co=e=>{const r=layer.getBoundingClientRect();return{x:(e.clientX-r.left)/scale,y:(e.clientY-r.top)/scale}};
 
-    // --- Keydown Handling ---
-    window.addEventListener('keydown', (e) => {
-        if (e.code === "Space" && document.activeElement.tagName !== "INPUT") {
-            isPenMode = false;
-            modeStatus.innerText = "BOARD DRAG MODE";
-            modeStatus.style.color = "orange";
-            modeStatus.style.background = "#fff3e0";
-            pointingCont.style.display = "none";
-            writingCont.style.display = "none";
-            svg.style.cursor = "move";
-        }
+/* ---- tools & mode ---- */
+function setTool(t){tool=t;document.body.classList.toggle('texttool',t=='text');document.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t==t));mode()}
+document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>setTool(b.dataset.t));
+function mode(){
+  const m=$('mode');
+  if(space){m.textContent='BOARD DRAG';m.style.background='#fff3e0';m.style.color='#e65100'}
+  else if(tkey){m.textContent='TEXT: ക്ലിക്ക് ചെയ്ത് ടൈപ്പ് ചെയ്യുക';m.style.background='#fce4ec';m.style.color='#c2185b'}
+  else if(ctrl){m.textContent='TEXT MOVE / EDIT';m.style.background='#e3f2fd';m.style.color='#1565c0'}
+  else{const n={pen:'✏️ PEN',hl:'🖍 HIGHLIGHT',eraser:'🧽 ERASER',line:'LINE',rect:'RECT',ell:'ELLIPSE',text:'🔤 TEXT: ക്ലിക്ക് ചെയ്ത് ടൈപ്പ് ചെയ്യുക (Enter = ഓക്കെ)'};m.textContent=n[tool];m.style.background='#e8f5e9';m.style.color='#2e7d32'}
+  if(space||ctrl)hideHands();
+}
+function hideHands(){$('pointing').style.display=$('writing').style.display=$('ring').style.display='none'}
+function renderHand(e){
+  if(space||ctrl||e.target.closest('.dt.edit')||e.target.closest('#toolbar,#legend,#help')){hideHands();return}
+  if(tool=='eraser'){hideHands();const r=$('ring');r.style.display='block';r.style.left=e.clientX+'px';r.style.top=e.clientY+'px';return}
+  $('ring').style.display='none';
+  const a=drawing?$('writing'):$('pointing'),b=drawing?$('pointing'):$('writing');
+  a.style.display='block';b.style.display='none';
+  a.style.left=(e.clientX+(drawing?NIB_X:-10))+'px';a.style.top=(e.clientY+(drawing?NIB_Y:-5))+'px';
+}
 
-        if ((e.key === "Control" || e.key === "Alt") && document.activeElement.tagName !== "INPUT") {
-            isDragKeyPressed = true;
-            document.body.classList.add('drag-key-pressed');
-            modeStatus.innerText = "TEXT DRAG MODE (Hold Key & Drag Text)";
-            modeStatus.style.color = "#1565c0";
-            modeStatus.style.background = "#e3f2fd";
-        }
+/* ---- undo / redo ---- */
+function rec(type,items){cur.undo.push({type,items});cur.redo=[]}
+function run(a,inv){const add=(a.type=='add')!=inv;a.items.forEach(i=>add?i.p.appendChild(i.el):i.el.remove())}
+function undo(){const a=cur.undo.pop();if(a){run(a,true);cur.redo.push(a)}}
+function redo(){const a=cur.redo.pop();if(a){run(a,false);cur.undo.push(a)}}
+function clearPage(){
+  if(!confirm('ഈ പേജിലെ എല്ലാം മായ്ക്കട്ടെ?'))return;
+  cur.img.innerHTML=cur.svg.innerHTML=cur.txt.innerHTML='';cur.undo=[];cur.redo=[];cur.lastY=null;
+}
 
-        if (e.code === "ArrowDown") { posY -= 60; applyTransform(); }
-        if (e.code === "ArrowUp") { posY += 60; applyTransform(); }
+/* ---- drawing ---- */
+function paneDown(e){
+  if(e.button!==0)return;
+  if((tool=='text'||tkey||e.shiftKey)&&!e.target.closest('.dt')){
+    e.preventDefault();const c=co(e);
+    makeText(c.x,c.y-parseFloat($('ts').value)*1.0,'',true);return;
+  }
+  if(e.target.closest('.dt'))return;
+  if(space){pan=true;panS={x:e.clientX-posX,y:e.clientY-posY};return}
+  if(ctrl)return;
+  drawing=true;const c=co(e);sx=c.x;sy=c.y;
+  if(tool=='eraser'){erased=[];erase(e);return}
+  const w=$('pw').value/scale,hl=tool=='hl';
+  let el;
+  if(tool=='rect')el=document.createElementNS(NS,'rect');
+  else if(tool=='ell')el=document.createElementNS(NS,'ellipse');
+  else if(tool=='line')el=document.createElementNS(NS,'line');
+  else{el=document.createElementNS(NS,'path');el.setAttribute('d',`M ${c.x} ${c.y} l 0 0`)}
+  el.setAttribute('stroke',$('color').value);
+  el.setAttribute('stroke-width',hl?w*2.5:w);
+  if(hl)el.setAttribute('stroke-opacity','0.4');
+  el.setAttribute('fill','none');el.setAttribute('stroke-linecap','round');el.setAttribute('stroke-linejoin','round');
+  if(tool=='line'){el.setAttribute('x1',c.x);el.setAttribute('y1',c.y);el.setAttribute('x2',c.x);el.setAttribute('y2',c.y)}
+  cur.svg.appendChild(el);shape=el;
+}
+function erase(e){
+  const r=10;
+  [[0,0],[r,0],[-r,0],[0,r],[0,-r]].forEach(([dx,dy])=>{
+    document.elementsFromPoint(e.clientX+dx,e.clientY+dy).forEach(el=>{
+      if(el.parentNode===cur.svg){erased.push({el,p:cur.svg});el.remove()}
     });
+  });
+}
+addEventListener('pointermove',e=>{
+  renderHand(e);
+  if(!drawing&&!pan&&!drag&&!e.target.closest('#toolbar,#legend,#help'))bind(paneAt(e));
+  if(drag){const c=co(e);drag.el.style.left=(c.x-drag.ox)+'px';drag.el.style.top=(c.y-drag.oy)+'px';return}
+  if(pan){posX=e.clientX-panS.x;posY=e.clientY-panS.y;apply();return}
+  if(!drawing)return;
+  if(tool=='eraser'){erase(e);return}
+  if(!shape)return;
+  const c=co(e);
+  if(tool=='line'){shape.setAttribute('x2',c.x);shape.setAttribute('y2',c.y)}
+  else if(tool=='rect'){shape.setAttribute('x',Math.min(sx,c.x));shape.setAttribute('y',Math.min(sy,c.y));shape.setAttribute('width',Math.abs(c.x-sx));shape.setAttribute('height',Math.abs(c.y-sy))}
+  else if(tool=='ell'){shape.setAttribute('cx',(sx+c.x)/2);shape.setAttribute('cy',(sy+c.y)/2);shape.setAttribute('rx',Math.abs(c.x-sx)/2);shape.setAttribute('ry',Math.abs(c.y-sy)/2)}
+  else shape.setAttribute('d',shape.getAttribute('d')+` L ${c.x} ${c.y}`);
+});
+addEventListener('pointerup',()=>{
+  drag=null;pan=false;
+  if(!drawing)return;drawing=false;
+  if(tool=='eraser'){if(erased.length)rec('del',erased);erased=[];return}
+  if(shape){
+    if($('fade').checked){const s=shape;s.classList.add('fade');setTimeout(()=>s.remove(),3300)}
+    else rec('add',[{el:shape,p:cur.svg}]);
+    shape=null;
+  }
+});
 
-    window.addEventListener('keyup', (e) => {
-        if (e.code === "Space" && document.activeElement.tagName !== "INPUT") {
-            resetToPenMode();
-        }
+/* ---- text ---- */
+function makeText(x,y,v,start){
+  const d=mk('div','dt');d.dir='auto';d.textContent=v;
+  const fs=parseFloat($('ts').value);
+  d.style.color=$('color').value;d.style.fontSize=fs+'px';d.style.fontFamily=$('ff').value;
+  d.style.left=x+'px';d.style.top=y+'px';
+  d.addEventListener('blur',()=>{
+    const sl=getSelection();if(sl.rangeCount&&d.contains(sl.anchorNode))sl.removeAllRanges();
+    d.classList.remove('edit');d.contentEditable=false;
+    if(!d.textContent.trim()){d.remove();return}
+    if(!d._rec){d._rec=1;rec('add',[{el:d,p:cur.txt}])}
+  });
+  d.addEventListener('keydown',e=>{if(e.key=='Enter'&&!e.shiftKey){e.preventDefault();d.blur()}});
+  cur.txt.appendChild(d);active=d;
+  if(v.trim()){d._rec=1;rec('add',[{el:d,p:cur.txt}])}
+  if(start)edit(d);
+}
+function addText(){
+  const v=$('ti').value;if(!v.trim())return;
+  const fs=parseFloat($('ts').value),r=layer.getBoundingClientRect();
+  const x=(vp.getBoundingClientRect().left+vp.clientWidth/2-r.left)/scale;
+  const y=cur.lastY===null?(innerHeight/3-r.top)/scale:cur.lastY+fs*2.3;
+  cur.lastY=y;$('ti').value='';makeText(x,y,v,true);
+}
+function edit(d){
+  d.classList.add('edit');d.contentEditable=true;d.focus();
+  const s=getSelection(),rg=document.createRange();rg.selectNodeContents(d);rg.collapse(false);s.removeAllRanges();s.addRange(rg);
+}
+function delText(){if(active&&active.parentNode){const p=active.parentNode;active.remove();rec('del',[{el:active,p}]);active=null}}
+function textDown(e){
+  const d=e.target.closest('.dt');
+  if(!d||d.classList.contains('edit'))return;
+  if(tool=='text'&&!(e.ctrlKey||e.altKey||ctrl)){e.preventDefault();active=d;edit(d);return}
+  if(e.ctrlKey||e.altKey||ctrl){
+    e.preventDefault();active&&active.classList.remove('act');active=d;d.classList.add('act');
+    const c=co(e);drag={el:d,ox:c.x-parseFloat(d.style.left),oy:c.y-parseFloat(d.style.top)};
+  }
+}
+function textDbl(e){const d=e.target.closest('.dt');if(d&&(e.ctrlKey||e.altKey||ctrl)){active=d;edit(d)}}
 
-        if (e.key === "Control" || e.key === "Alt") {
-            isDragKeyPressed = false;
-            document.body.classList.remove('drag-key-pressed');
-            resetToPenMode();
-        }
-    });
+/* tajweed colours: selected letters only, or whole box */
+function colorSel(c){
+  const s=getSelection(),ed=document.querySelector('.dt.edit');
+  if(ed&&s.rangeCount&&!s.isCollapsed&&ed.contains(s.anchorNode)){
+    document.execCommand('styleWithCSS',false,true);document.execCommand('foreColor',false,c);s.collapseToEnd();
+  }else if(active&&active.parentNode){
+    active.querySelectorAll('*').forEach(n=>n.style.color='');active.style.color=c;
+  }
+}
+document.querySelectorAll('.lg').forEach(l=>l.onclick=()=>colorSel(l.dataset.c));
+document.querySelectorAll('#toolbar,#legend').forEach(t=>t.addEventListener('mousedown',e=>{if(e.target.closest('button,.lg'))e.preventDefault()}));
+document.addEventListener('click',e=>{if(e.target.tagName=='BUTTON')e.target.blur()});
 
-    function resetToPenMode() {
-        isPenMode = true;
-        modeStatus.innerText = "PEN MODE (Space: Board Drag | Ctrl: Text Drag)";
-        modeStatus.style.color = "green";
-        modeStatus.style.background = "#e8f5e9";
-        svg.style.cursor = "none";
-    }
+/* ---- images / PDF ---- */
+function status(t){const s=$('stat');s.textContent=t;s.style.display=t?'block':'none'}
+$('up').onchange=async e=>{
+  for(const f of e.target.files){
+    if(f.type=='application/pdf'){try{await addPdf(f)}catch(err){status('PDF ലോഡ് ചെയ്യാനായില്ല (ഇന്റർനെറ്റ് വേണം)');setTimeout(()=>status(''),3000)}}
+    else{const img=new Image();img.src=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(f)});cur.img.appendChild(img)}
+  }
+  e.target.value='';
+};
+async function addPdf(file){
+  if(!window.pdfjsLib){
+    await new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=ok;s.onerror=no;document.head.appendChild(s)});
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+  const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+  let first=true;
+  for(let n=1;n<=pdf.numPages;n++){
+    status(`PDF പേജ് ${n}/${pdf.numPages}`);
+    const pg=await pdf.getPage(n),v0=pg.getViewport({scale:1}),v=pg.getViewport({scale:2400/v0.width});
+    const cv=document.createElement('canvas');cv.width=v.width;cv.height=v.height;
+    await pg.render({canvasContext:cv.getContext('2d'),viewport:v}).promise;
+    const img=new Image();img.src=cv.toDataURL('image/jpeg',.92);
+    if(!(first&&isEmpty(cur)))addPage();
+    first=false;cur.img.appendChild(img);
+  }
+  status('');
+}
 
-    // Enter key press to add text
-    document.getElementById("textInput").addEventListener("keypress", function(e) {
-        if (e.key === "Enter") {
-            addText();
-        }
-    });
+/* ---- background ---- */
+function setBg(v){
+  const g='linear-gradient(#0002 1px,transparent 1px),linear-gradient(90deg,#0002 1px,transparent 1px)';
+  const m={white:['#fff'],cream:['#fbf3dc'],board:['#1f3d2b'],dark:['#1b1b1b'],green:['#00b140'],
+    grid:['#fff',g+'',' 40px 40px'],lined:['#fff','repeating-linear-gradient(#fff 0,#fff 59px,#9bb7e0 60px)']};
+  const x=m[v];layer.style.background=x[0];
+  if(v=='grid'){layer.style.backgroundImage=g;layer.style.backgroundSize='40px 40px'}
+  else if(v=='lined'){layer.style.backgroundImage=x[1];layer.style.backgroundSize='auto'}
+  else layer.style.backgroundImage='none';
+  if(v=='board'||v=='dark'){if($('color').value=='#000000')$('color').value='#ffffff'}
+  else if($('color').value=='#ffffff')$('color').value='#000000';
+}
 
-    // Zoom Logic
-    window.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        const zoomSpeed = 0.02;
-        if (e.deltaY < 0) scale += zoomSpeed;
-        else scale = Math.max(0.1, scale - zoomSpeed);
-        applyTransform();
-    }, { passive: false });
+/* ---- misc ---- */
+function fs(){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}
+function toggleLegend(){const l=$('legend');l.style.display=l.style.display=='none'?'':'none'}
+function toggleBar(){$('toolbar').classList.toggle('hide')}
+function toggleHelp(){const h=$('help');h.style.display=h.style.display=='block'?'none':'block'}
+addEventListener('wheel',e=>{
+  e.preventDefault();
+  if(!e.target.closest('#toolbar,#legend,#help'))bind(paneAt(e));
+  if(e.shiftKey){posY-=(e.deltaY||e.deltaX);apply();return}
+  const f=e.deltaY<0?1.08:1/1.08,ns=Math.max(.1,Math.min(5,scale*f));
+  const bx=e.clientX-vp.getBoundingClientRect().left;posX=bx-(bx-posX)*ns/scale;posY=e.clientY-(e.clientY-posY)*ns/scale;scale=ns;apply();
+},{passive:false});
+addEventListener('keydown',e=>{
+  const t=e.target,typing=/INPUT|SELECT|TEXTAREA/.test(t.tagName)||t.isContentEditable;
+  if(e.key=='Escape'){if(t.isContentEditable)t.blur();$('help').style.display='none';return}
+  if(e.key=='Control'||e.key=='Alt'){ctrl=true;document.body.classList.add('ctrl');mode();return}
+  if(typing)return;
+  const k=e.code.startsWith('Key')?e.code.slice(3).toLowerCase():e.code.startsWith('Digit')?e.code.slice(5):e.code=='BracketLeft'?'[':e.code=='BracketRight'?']':e.key.toLowerCase();
+  if(k=='t'&&!e.ctrlKey){setTool(tool=='text'?'pen':'text');return}
+  if(e.code=='Space'){space=true;e.preventDefault();mode();return}
+  if(e.ctrlKey&&k=='z'){undo();e.preventDefault();return}
+  if(e.ctrlKey&&k=='y'){redo();e.preventDefault();return}
+  const tm={1:'pen',2:'hl',3:'eraser',4:'line',5:'rect',6:'ell'};
+  const cm={7:'#000000',8:'#e53935',9:'#1565c0',0:'#ffffff'};
+  if(cm[k]){$('color').value=cm[k];return}
+  if(k=='['||k==']'){const p=$('pw');p.value=+p.value+(k==']'?4:-4);return}
+  if(tm[k])setTool(tm[k]);
+  else if(k=='h')toggleBar();else if(k=='l')toggleLegend();else if(k=='s')toggleSplit();else if(k=='b')switchTab();else if(k=='f')fit();else if(k=='?')toggleHelp();
+  else if(e.key=='ArrowLeft')go(-1);else if(e.key=='ArrowRight')go(1);
+  else if(e.key=='ArrowDown'){posY-=60;apply()}else if(e.key=='ArrowUp'){posY+=60;apply()}
+  else if(e.key=='Delete')delText();
+});
+addEventListener('keyup',e=>{
+  if(e.code=='Space')space=false;
+  
+  if(e.key=='Control'||e.key=='Alt'){ctrl=false;document.body.classList.remove('ctrl')}
+  mode();
+});
+addEventListener('blur',()=>{space=ctrl=tkey=false;document.body.classList.remove('ctrl');mode()});
+addEventListener('beforeunload',e=>{if([pA,pB].some(q=>q&&q.pages.some(p=>!isEmpty(p)))){e.preventDefault();e.returnValue=''}});
 
-    function applyTransform() {
-        contentLayer.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-    }
-
-    function renderHand(e) {
-        if (!isPenMode || isDragKeyPressed) {
-            pointingCont.style.display = "none";
-            writingCont.style.display = "none";
-            return;
-        }
-        let active = drawing ? writingCont : pointingCont;
-        let idle = drawing ? pointingCont : writingCont;
-        active.style.display = "block";
-        idle.style.display = "none";
-        
-        if (drawing) {
-            active.style.left = (e.clientX + NIB_X) + "px";
-            active.style.top = (e.clientY + NIB_Y) + "px";
-        } else {
-            active.style.left = (e.clientX - 10) + "px";
-            active.style.top = (e.clientY - 5) + "px";
-        }
-    }
-
-    // --- Add Text Function ---
-    function addText() {
-        const input = document.getElementById("textInput");
-        const val = input.value.trim();
-        if (!val) return;
-
-        const textDiv = document.createElement("div");
-        textDiv.className = "draggable-text";
-        textDiv.innerText = val;
-        textDiv.style.color = document.getElementById("colorPicker").value;
-        
-        // Text Size പ്രത്യേകമായി എടുക്കുന്നു
-        const fontSize = parseFloat(document.getElementById("textSize").value);
-        textDiv.style.fontSize = fontSize + "px";
-
-        const rect = contentLayer.getBoundingClientRect();
-        const defaultX = (window.innerWidth / 2 - rect.left) / scale;
-        
-        // ടെക്സ്റ്റുകൾ ഒന്നതിനു താഴെ ഒന്നായി വരാനുള്ള പൊസിഷൻ കണക്കാക്കൽ
-        let defaultY;
-        if (lastTextY === null) {
-            defaultY = (window.innerHeight / 3 - rect.top) / scale;
-        } else {
-            defaultY = lastTextY + fontSize + 15; // തൊട്ടടുത്ത വരിയിലേക്ക് താഴേക്ക് മാറ്റുന്നു
-        }
-        lastTextY = defaultY;
-
-        textDiv.style.left = defaultX + "px";
-        textDiv.style.top = defaultY + "px";
-
-        // Drag handler
-        textDiv.addEventListener('mousedown', (e) => {
-            if (!isDragKeyPressed) return; 
-
-            e.stopPropagation();
-            isDraggingText = true;
-            activeTextElement = textDiv;
-
-            const c = getCoords(e);
-            textOffsetX = c.x - parseFloat(textDiv.style.left);
-            textOffsetY = c.y - parseFloat(textDiv.style.top);
-        });
-
-        textContainer.appendChild(textDiv);
-        strokes.push(textDiv);
-        input.value = "";
-    }
-
-    // Image Upload Logic
-    bgUploader.onchange = function(e) {
-        const files = e.target.files;
-        for (let file of files) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const img = document.createElement("img");
-                img.src = event.target.result;
-                img.className = "bg-img";
-                imgContainer.appendChild(img);
-            }
-            reader.readAsDataURL(file);
-        }
-    };
-
-    svg.onmousedown = (e) => {
-        if (e.buttons !== 1) return;
-        if (isPenMode && !isDragKeyPressed) {
-            drawing = true;
-            const c = getCoords(e);
-            currentPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            currentPath.setAttribute("d", `M ${c.x} ${c.y}`);
-            currentPath.setAttribute("stroke", document.getElementById("colorPicker").value);
-            currentPath.setAttribute("stroke-width", document.getElementById("penWidth").value / scale);
-            currentPath.setAttribute("fill", "none");
-            currentPath.setAttribute("stroke-linecap", "round");
-            currentPath.setAttribute("stroke-linejoin", "round");
-            svg.appendChild(currentPath);
-            strokes.push(currentPath);
-        } else if (!isPenMode) {
-            dragging = true;
-            startX = e.clientX - posX;
-            startY = e.clientY - posY;
-        }
-    };
-
-    window.addEventListener('mousemove', (e) => {
-        if (isDraggingText && activeTextElement) {
-            const c = getCoords(e);
-            activeTextElement.style.left = (c.x - textOffsetX) + "px";
-            activeTextElement.style.top = (c.y - textOffsetY) + "px";
-            return;
-        }
-
-        if (isPenMode && !isDragKeyPressed) {
-            if (drawing && currentPath) {
-                const c = getCoords(e);
-                currentPath.setAttribute("d", currentPath.getAttribute("d") + ` L ${c.x} ${c.y}`);
-            }
-            renderHand(e);
-        } else if (dragging) {
-            posX = e.clientX - startX;
-            posY = e.clientY - startY;
-            applyTransform();
-        }
-    });
-
-    window.addEventListener('mouseup', () => {
-        if (isDraggingText) {
-            isDraggingText = false;
-            activeTextElement = null;
-        }
-
-        if (drawing && currentPath && document.getElementById("fadeToggle").checked) {
-            let p = currentPath;
-            p.setAttribute("class", "fade-out-active");
-            setTimeout(() => { if (p.parentNode) svg.removeChild(p); }, 3000);
-        }
-        drawing = false; 
-        dragging = false;
-    });
-
-    function getCoords(e) {
-        const rect = contentLayer.getBoundingClientRect();
-        return { x: (e.clientX - rect.left) / scale, y: (e.clientY - rect.top) / scale };
-    }
-
-    function undo() {
-        if (strokes.length > 0) {
-            const last = strokes.pop();
-            if (last.parentNode) last.parentNode.removeChild(last);
-        }
-    }
-
-    function clearBoard() {
-        svg.innerHTML = "";
-        textContainer.innerHTML = "";
-        imgContainer.innerHTML = "";
-        strokes = [];
-        lastTextY = null; // Position Reset
-    }
-
-    function toggleFullScreen() {
-        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-        else document.exitFullscreen();
-    }
+pA=mkPane($('viewport'),$('layer'));wirePane(pA);bind(pA);newPage();show(0);fit();setTool('pen');setBg('white');
 </script>
-
 </body>
 </html>
