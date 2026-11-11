@@ -45,7 +45,7 @@ body.ctrl .dt.act{outline:2px dashed #1565c0}
  <b id="mode"></b>
  <span class="g" id="tools">
   <button data-t="pen">✏️ പേന</button><button data-t="hl">🖍 ഹൈലൈറ്റ്</button><button data-t="eraser">🧽 മായ്ക്കുക</button>
-  <button data-t="line">╱</button><button data-t="rect">▭</button><button data-t="ell">◯</button>
+  <button data-t="line">╱</button><button data-t="rect">▭</button><button data-t="ell">◯</button><button data-t="arrow" title="Arrow (A)">➜</button>
  </span>
  <span class="g">
   <input type="color" id="color" value="#000000">
@@ -93,12 +93,12 @@ body.ctrl .dt.act{outline:2px dashed #1565c0}
 
 <div id="help">
  <b>ഷോർട്ട്കട്ടുകൾ</b><br>
- 1 പേന · 2 ഹൈലൈറ്റ് · 3 മായ്ക്കൽ · 4 വര · 5 ചതുരം · 6 വൃത്തം<br>
+ 1 പേന · 2 ഹൈലൈറ്റ് · 3 മായ്ക്കൽ · 4 വര · 5 ചതുരം · 6 വൃത്തം · A ആരോ<br>
  Space പിടിച്ച് ഡ്രാഗ്: ബോർഡ് നീക്കുക · Ctrl/Alt പിടിച്ച് ഡ്രാഗ്: ടെക്സ്റ്റ് നീക്കുക<br>
  Ctrl + ഡബിൾ ക്ലിക്ക്: ടെക്സ്റ്റ് എഡിറ്റ് · Esc: എഡിറ്റ് നിർത്തുക · Delete: ടെക്സ്റ്റ് നീക്കം<br>
  ടെക്സ്റ്റിൽ അക്ഷരം സെലക്ട് ചെയ്ത് 🎨 പാലറ്റിൽ ക്ലിക്ക് → ആ അക്ഷരത്തിന് മാത്രം നിറം<br>
- Ctrl+Z / Ctrl+Y: Undo/Redo · ← → : പേജ് മാറ്റം · ↑ ↓ : സ്ക്രോൾ<br>
- Mouse wheel: സൂം · Shift+wheel: സ്ക്രോൾ · F: Fit · H: ടൂൾബാർ മറയ്ക്കുക · B: ബോർഡ് 1 ↔ ബോർഡ് 2 (ഫുൾ സ്ക്രീൻ ടാബ്; ഒന്നിൽ PDF, മറ്റേത് ഒഴിഞ്ഞ ബോർഡ്) · S: സ്പ്ലിറ്റ് (ഇടത് പേജ്/PDF, വലത് ഒഴിഞ്ഞ ബോർഡ്; മൗസ് ഏത് വശത്തോ അതാണ് സജീവം) · L: പാലറ്റ് കാണിക്കുക/മറയ്ക്കുക<br><b>T (അല്ലെങ്കിൽ 🔤 Add Text ബട്ടൺ): ടെക്സ്റ്റ് ഓൺ/ഓഫ്</b> → ഓൺ ആയിരിക്കുമ്പോൾ എവിടെ ക്ലിക്ക് ചെയ്താലും അവിടെ ടൈപ്പ് ചെയ്യാം, എത്ര എണ്ണം വേണമെങ്കിലും · Enter: ഓക്കെ (Shift+Enter: പുതിയ വരി) · ഓഫ് ചെയ്യാൻ T അല്ലെങ്കിൽ 1 (പേന)<br>7 കറുപ്പ് · 8 ചുവപ്പ് · 9 നീല · 0 വെള്ള · [ ] പേന വലുപ്പം · H ടൂൾബാർ മറയ്ക്കുക
+ Ctrl+Z / Ctrl+Y: Undo/Redo · ← → : പേജ് മാറ്റം · ↑ ↓ : സൂം ഇൻ/ഔട്ട്<br>
+ Mouse wheel: മുകളിലേക്ക്/താഴേക്ക് സ്ക്രോൾ · Ctrl+wheel: സൂം · F: Fit · M: ഫുൾ സ്ക്രീൻ · D: Fade ഓൺ/ഓഫ് · H: ടൂൾബാർ മറയ്ക്കുക · B: ബോർഡ് 1 ↔ ബോർഡ് 2 (ഫുൾ സ്ക്രീൻ ടാബ്; ഒന്നിൽ PDF, മറ്റേത് ഒഴിഞ്ഞ ബോർഡ്) · S: സ്പ്ലിറ്റ് (ഇടത് പേജ്/PDF, വലത് ഒഴിഞ്ഞ ബോർഡ്; മൗസ് ഏത് വശത്തോ അതാണ് സജീവം) · L: പാലറ്റ് കാണിക്കുക/മറയ്ക്കുക<br><b>T (അല്ലെങ്കിൽ 🔤 Add Text ബട്ടൺ): ടെക്സ്റ്റ് ഓൺ/ഓഫ്</b> → ഓൺ ആയിരിക്കുമ്പോൾ എവിടെ ക്ലിക്ക് ചെയ്താലും അവിടെ ടൈപ്പ് ചെയ്യാം, എത്ര എണ്ണം വേണമെങ്കിലും · Enter: ഓക്കെ (Shift+Enter: പുതിയ വരി) · ഓഫ് ചെയ്യാൻ T അല്ലെങ്കിൽ 1 (പേന)<br>7 കറുപ്പ് · 8 ചുവപ്പ് · 9 നീല · 0 വെള്ള · [ ] പേന വലുപ്പം · H ടൂൾബാർ മറയ്ക്കുക
 </div>
 <div id="stat"></div>
 <div id="ring"></div>
@@ -157,6 +157,7 @@ function go(d){const n=pi+d;if(n>=0&&n<pages.length){show(n);posY=$('toolbar').c
 function isEmpty(p){return !p.img.children.length&&!p.svg.children.length&&!p.txt.children.length}
 
 function apply(){layer.style.transform=`translate(${posX}px,${posY}px) scale(${scale})`}
+function zoomBy(f){const bx=vp.clientWidth/2,by=innerHeight/2,ns=Math.max(.1,Math.min(5,scale*f));posX=bx-(bx-posX)*ns/scale;posY=by-(by-posY)*ns/scale;scale=ns;apply()}
 function fit(){scale=vp.clientWidth/W;posX=0;posY=$('toolbar').classList.contains('hide')?0:$('toolbar').offsetHeight;apply()}
 const co=e=>{const r=layer.getBoundingClientRect();return{x:(e.clientX-r.left)/scale,y:(e.clientY-r.top)/scale}};
 
@@ -168,7 +169,7 @@ function mode(){
   if(space){m.textContent='BOARD DRAG';m.style.background='#fff3e0';m.style.color='#e65100'}
   else if(tkey){m.textContent='TEXT: ക്ലിക്ക് ചെയ്ത് ടൈപ്പ് ചെയ്യുക';m.style.background='#fce4ec';m.style.color='#c2185b'}
   else if(ctrl){m.textContent='TEXT MOVE / EDIT';m.style.background='#e3f2fd';m.style.color='#1565c0'}
-  else{const n={pen:'✏️ PEN',hl:'🖍 HIGHLIGHT',eraser:'🧽 ERASER',line:'LINE',rect:'RECT',ell:'ELLIPSE',text:'🔤 TEXT: ക്ലിക്ക് ചെയ്ത് ടൈപ്പ് ചെയ്യുക (Enter = ഓക്കെ)'};m.textContent=n[tool];m.style.background='#e8f5e9';m.style.color='#2e7d32'}
+  else{const n={pen:'✏️ PEN',hl:'🖍 HIGHLIGHT',eraser:'🧽 ERASER',line:'LINE',rect:'RECT',ell:'ELLIPSE',arrow:'ARROW',text:'🔤 TEXT: ക്ലിക്ക് ചെയ്ത് ടൈപ്പ് ചെയ്യുക (Enter = ഓക്കെ)'};m.textContent=n[tool];m.style.background='#e8f5e9';m.style.color='#2e7d32'}
   if(space||ctrl)hideHands();
 }
 function hideHands(){$('pointing').style.display=$('writing').style.display=$('ring').style.display='none'}
@@ -236,6 +237,10 @@ addEventListener('pointermove',e=>{
   if(tool=='line'){shape.setAttribute('x2',c.x);shape.setAttribute('y2',c.y)}
   else if(tool=='rect'){shape.setAttribute('x',Math.min(sx,c.x));shape.setAttribute('y',Math.min(sy,c.y));shape.setAttribute('width',Math.abs(c.x-sx));shape.setAttribute('height',Math.abs(c.y-sy))}
   else if(tool=='ell'){shape.setAttribute('cx',(sx+c.x)/2);shape.setAttribute('cy',(sy+c.y)/2);shape.setAttribute('rx',Math.abs(c.x-sx)/2);shape.setAttribute('ry',Math.abs(c.y-sy)/2)}
+  else if(tool=='arrow'){
+    const an=Math.atan2(c.y-sy,c.x-sx),h=$('pw').value/scale*4+14/scale,a1=an+2.6,a2=an-2.6;
+    shape.setAttribute('d',`M ${sx} ${sy} L ${c.x} ${c.y} M ${c.x+h*Math.cos(a1)} ${c.y+h*Math.sin(a1)} L ${c.x} ${c.y} L ${c.x+h*Math.cos(a2)} ${c.y+h*Math.sin(a2)}`);
+  }
   else shape.setAttribute('d',shape.getAttribute('d')+` L ${c.x} ${c.y}`);
 });
 addEventListener('pointerup',()=>{
@@ -351,7 +356,7 @@ function toggleHelp(){const h=$('help');h.style.display=h.style.display=='block'
 addEventListener('wheel',e=>{
   e.preventDefault();
   if(!e.target.closest('#toolbar,#legend,#help'))bind(paneAt(e));
-  if(e.shiftKey){posY-=(e.deltaY||e.deltaX);apply();return}
+  if(!e.ctrlKey){posY-=e.deltaY;posX-=e.deltaX;apply();return}
   const f=e.deltaY<0?1.08:1/1.08,ns=Math.max(.1,Math.min(5,scale*f));
   const bx=e.clientX-vp.getBoundingClientRect().left;posX=bx-(bx-posX)*ns/scale;posY=e.clientY-(e.clientY-posY)*ns/scale;scale=ns;apply();
 },{passive:false});
@@ -365,14 +370,14 @@ addEventListener('keydown',e=>{
   if(e.code=='Space'){space=true;e.preventDefault();mode();return}
   if(e.ctrlKey&&k=='z'){undo();e.preventDefault();return}
   if(e.ctrlKey&&k=='y'){redo();e.preventDefault();return}
-  const tm={1:'pen',2:'hl',3:'eraser',4:'line',5:'rect',6:'ell'};
+  const tm={1:'pen',2:'hl',3:'eraser',4:'line',5:'rect',6:'ell',a:'arrow'};
   const cm={7:'#000000',8:'#e53935',9:'#1565c0',0:'#ffffff'};
   if(cm[k]){$('color').value=cm[k];return}
   if(k=='['||k==']'){const p=$('pw');p.value=+p.value+(k==']'?4:-4);return}
   if(tm[k])setTool(tm[k]);
-  else if(k=='h')toggleBar();else if(k=='l')toggleLegend();else if(k=='s')toggleSplit();else if(k=='b')switchTab();else if(k=='f')fit();else if(k=='?')toggleHelp();
+  else if(k=='h')toggleBar();else if(k=='l')toggleLegend();else if(k=='s')toggleSplit();else if(k=='b')switchTab();else if(k=='f')fit();else if(k=='m')fs();else if(k=='d'){const f=$('fade');f.checked=!f.checked;status('Fade '+(f.checked?'ഓൺ':'ഓഫ്'));setTimeout(()=>status(''),1000)}else if(k=='?')toggleHelp();
   else if(e.key=='ArrowLeft')go(-1);else if(e.key=='ArrowRight')go(1);
-  else if(e.key=='ArrowDown'){posY-=60;apply()}else if(e.key=='ArrowUp'){posY+=60;apply()}
+  else if(e.key=='ArrowDown'){zoomBy(1/1.1)}else if(e.key=='ArrowUp'){zoomBy(1.1)}
   else if(e.key=='Delete')delText();
 });
 addEventListener('keyup',e=>{
